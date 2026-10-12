@@ -8,15 +8,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/")
 @RequiredArgsConstructor
 public class VehicleDomainController {
 
     private final VehicleDomainService vehicleDomainService;
 
     @GetMapping("/health")
-    public String health() {
-        return "Auto DB OK";
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("Auto DB OK");
     }
 
     @GetMapping("/vehicles/{vehicleId}")
