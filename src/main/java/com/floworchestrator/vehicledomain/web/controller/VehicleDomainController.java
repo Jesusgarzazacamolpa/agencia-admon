@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -16,6 +18,24 @@ public class VehicleDomainController {
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Auto DB OK");
+    }
+
+    @GetMapping("/vehicles")
+    public ResponseEntity<Map<String, Object>> getVehicles(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String model,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Integer year) {
+        return ResponseEntity.ok(vehicleDomainService.getVehicles(page, size, brand, model, status, minPrice, maxPrice, year));
+    }
+
+    @GetMapping("/vehicles/available")
+    public ResponseEntity<List<Map<String, Object>>> getAvailableVehicles() {
+        return ResponseEntity.ok(vehicleDomainService.getAvailableVehicles());
     }
 
     @GetMapping("/vehicles/{vehicleId}")

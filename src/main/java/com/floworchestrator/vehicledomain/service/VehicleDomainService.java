@@ -7,16 +7,22 @@ import com.floworchestrator.vehicledomain.repository.PaymentMethodRepository;
 import com.floworchestrator.vehicledomain.repository.PurchaseOrderRepository;
 import com.floworchestrator.vehicledomain.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +40,36 @@ public class VehicleDomainService {
         Vehicle vehicle = vehicleRepository.findByVehicleId(vehicleId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehicle not found: " + vehicleId));
         return toVehicleMap(vehicle);
+    }
+
+    public Map<String, Object> getVehicles(int page, int size, String brand, String model, String status,
+                                           BigDecimal minPrice, BigDecimal maxPrice, Integer year) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        
+        Boolean available = null;
+        if (status != null) {
+            available = "AVAILABLE".equalsIgnoreCase(status);
+        }
+
+        Page<Vehicle> vehiclePage = vehicleRepository.findWithFilters(
+                brand, model, available, minPrice, maxPrice, pageable);
+
+        List<Map<String, Object>> vehicles = vehiclePage.getContent().stream()
+                .map(this::toVehicleMap)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("vehicles", vehicles);
+        response.put("total", vehiclePage.getTotalElements());
+        response.put("page", page);
+        response.put("pageSize", size);
+        return response;
+    }
+
+    public List<Map<String, Object>> getAvailableVehicles() {
+        return vehicleRepository.findByAvailableTrue().stream()
+                .map(this::toVehicleMap)
+                .collect(Collectors.toList());
     }
 
     @Transactional
