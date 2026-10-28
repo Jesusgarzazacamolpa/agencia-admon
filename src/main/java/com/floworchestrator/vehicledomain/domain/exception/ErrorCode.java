@@ -8,8 +8,6 @@ public enum ErrorCode {
             "No se encontró el vehículo solicitado. Verifica el identificador e inténtalo de nuevo."),
     PURCHASE_ORDER_NOT_FOUND("ERR_PURCHASE_ORDER_NOT_FOUND_01", HttpStatus.NOT_FOUND,
             "No se encontró la orden de compra indicada. Verifica el identificador e inténtalo de nuevo."),
-    PURCHASE_ORDER_ALREADY_EXISTS("ERR_PURCHASE_ORDER_EXISTS_01", HttpStatus.CONFLICT,
-            "Ya existe una orden de compra con ese identificador. Usa uno diferente o consulta la orden existente."),
     INVALID_PRICE_RANGE("ERR_INVALID_PRICE_RANGE_01", HttpStatus.BAD_REQUEST,
             "El precio mínimo no puede ser mayor que el precio máximo. Ajusta el rango de búsqueda."),
     INVALID_PARAMETER("ERR_INVALID_PARAM_01", HttpStatus.BAD_REQUEST,

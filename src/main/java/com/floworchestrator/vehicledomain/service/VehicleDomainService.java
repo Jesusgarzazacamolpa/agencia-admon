@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -41,6 +42,8 @@ public class VehicleDomainService {
     private static final String STATUS_AVAILABLE = "AVAILABLE";
     private static final String STATUS_UNAVAILABLE = "UNAVAILABLE";
     private static final String PURCHASE_ORDER_CREATED_MESSAGE = "Orden registrada correctamente";
+    private static final String PURCHASE_ORDER_REPLAYED_MESSAGE =
+            "La orden ya estaba registrada; se reutiliza la existente";
     private static final Sort DEFAULT_SORT = Sort.by(
             Sort.Order.asc("brand"),
             Sort.Order.asc("model"),
@@ -92,8 +95,19 @@ public class VehicleDomainService {
                 .orElseThrow(() -> new ApiException(ErrorCode.VEHICLE_NOT_FOUND));
 
         String purchaseOrderId = resolvePurchaseOrderId(command.purchaseOrderId());
-        if (purchaseOrderRepository.existsByPurchaseOrderId(purchaseOrderId)) {
-            throw new ApiException(ErrorCode.PURCHASE_ORDER_ALREADY_EXISTS);
+        Optional<PurchaseOrder> existing =
+                purchaseOrderRepository.findByPurchaseOrderId(purchaseOrderId);
+        if (existing.isPresent()) {
+            PurchaseOrder order = existing.get();
+            if (!order.getVehicleId().equals(command.vehicleId())
+                    || !order.getCustomerId().equals(command.customerId())) {
+                throw new ApiException(ErrorCode.DATA_CONFLICT,
+                        "El identificador de orden ya está asociado a otro vehículo o cliente.");
+            }
+            log.info("purchase_order_replayed purchaseOrderId={} vehicleId={}",
+                    purchaseOrderId, command.vehicleId());
+            return new PurchaseOrderCreated(purchaseOrderId, order.getStatus(),
+                    PURCHASE_ORDER_REPLAYED_MESSAGE);
         }
 
         PurchaseOrder order = new PurchaseOrder();
