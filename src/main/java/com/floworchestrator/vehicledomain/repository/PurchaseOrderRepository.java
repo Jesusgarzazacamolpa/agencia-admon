@@ -7,5 +7,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, UUID> {
+
     Optional<PurchaseOrder> findByPurchaseOrderId(String purchaseOrderId);
+
+    boolean existsByPurchaseOrderId(String purchaseOrderId);
 }
