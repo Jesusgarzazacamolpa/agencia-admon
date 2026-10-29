@@ -30,6 +30,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Controlador REST del dominio de vehículos y compras. No define prefijo común: expone
+ * /health, /vehicles, /vehicles/available, /vehicles/{vehicleId}, /purchase-orders y /payment-methods.
+ */
 @RestController
 @Validated
 @RequiredArgsConstructor
@@ -43,11 +47,18 @@ public class VehicleDomainController {
 
     private final VehicleDomainService vehicleDomainService;
 
+    /**
+     * GET /health: comprobación simple de disponibilidad que devuelve el texto fijo "Auto DB OK".
+     */
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Auto DB OK");
     }
 
+    /**
+     * GET /vehicles: consulta el catálogo con filtros opcionales y paginación 1-based
+     * (page por defecto 1 y size por defecto 20, entre 1 y 100).
+     */
     @GetMapping("/vehicles")
     public ResponseEntity<VehiclePageResponse> getVehicles(
             @RequestParam(defaultValue = "1")
@@ -85,6 +96,9 @@ public class VehicleDomainController {
                 vehicleDomainService.getVehicles(page, size, brand, model, status, minPrice, maxPrice, year)));
     }
 
+    /**
+     * GET /vehicles/available: devuelve todos los vehículos disponibles sin paginar.
+     */
     @GetMapping("/vehicles/available")
     public ResponseEntity<List<VehicleResponse>> getAvailableVehicles() {
         List<VehicleResponse> vehicles = vehicleDomainService.getAvailableVehicles().stream()
@@ -93,12 +107,19 @@ public class VehicleDomainController {
         return ResponseEntity.ok(vehicles);
     }
 
+    /**
+     * GET /vehicles/{vehicleId}: consulta un vehículo por su identificador; responde 404 si no existe.
+     */
     @GetMapping("/vehicles/{vehicleId}")
     public ResponseEntity<VehicleResponse> getVehicle(@PathVariable String vehicleId) {
         VehicleInfo vehicle = vehicleDomainService.getVehicleById(vehicleId);
         return ResponseEntity.ok(VehicleWebMapper.toResponse(vehicle));
     }
 
+    /**
+     * POST /purchase-orders: registra una orden de compra de forma idempotente y responde 200 OK
+     * con el identificador, el estado y un mensaje.
+     */
     @PostMapping(path = "/purchase-orders", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PurchaseOrderResponse> createPurchaseOrder(
             @Valid @RequestBody CreatePurchaseOrderRequest request) {
@@ -107,6 +128,10 @@ public class VehicleDomainController {
         return ResponseEntity.ok(VehicleWebMapper.toResponse(order));
     }
 
+    /**
+     * POST /payment-methods: registra el pago de una orden existente y la deja en estado
+     * PAYMENT_CONFIGURED; responde 404 si la orden no existe.
+     */
     @PostMapping(path = "/payment-methods", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PaymentMethodResponse> registerPayment(
             @Valid @RequestBody RegisterPaymentRequest request) {

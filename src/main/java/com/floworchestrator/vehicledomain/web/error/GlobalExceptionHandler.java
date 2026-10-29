@@ -28,6 +28,10 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+/**
+ * Manejador global de excepciones de la API. Traduce cada fallo al contrato {@link ApiErrorResponse}
+ * con su estado HTTP, flow_code, ruta, trace_id y detalles de validación.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -36,6 +40,9 @@ public class GlobalExceptionHandler {
     private static final String DEFAULT_PARAMETER_NAME = "parámetro";
     private static final Pattern CAMEL_CASE_BOUNDARY = Pattern.compile("([a-z0-9])([A-Z])");
 
+    /**
+     * Responde con el estado y flow_code del ErrorCode; registra los 5xx como error y el resto como warning.
+     */
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiErrorResponse> handleApiException(ApiException exception, HttpServletRequest request) {
         ErrorCode errorCode = exception.getErrorCode();
@@ -51,6 +58,9 @@ public class GlobalExceptionHandler {
         return buildResponse(errorCode, exception.getMessage(), request, List.of());
     }
 
+    /**
+     * Devuelve 400 VALIDATION_ERROR con un detalle por cada campo inválido del cuerpo.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleBodyValidation(MethodArgumentNotValidException exception,
                                                                  HttpServletRequest request) {
@@ -63,6 +73,9 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.VALIDATION_ERROR, ErrorCode.VALIDATION_ERROR.message(), request, details);
     }
 
+    /**
+     * Devuelve 400 INVALID_PARAMETER cuando falla la validación de parámetros de un handler.
+     */
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ApiErrorResponse> handleParameterValidation(HandlerMethodValidationException exception,
                                                                       HttpServletRequest request) {
@@ -75,6 +88,9 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.INVALID_PARAMETER, ErrorCode.INVALID_PARAMETER.message(), request, details);
     }
 
+    /**
+     * Devuelve 400 INVALID_PARAMETER cuando falla una restricción de bean validation.
+     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleConstraintViolation(ConstraintViolationException exception,
                                                                       HttpServletRequest request) {
@@ -87,6 +103,9 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.INVALID_PARAMETER, ErrorCode.INVALID_PARAMETER.message(), request, details);
     }
 
+    /**
+     * Devuelve 400 INVALID_PARAMETER cuando un parámetro no se puede convertir al tipo esperado.
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException exception,
                                                                HttpServletRequest request) {
@@ -99,6 +118,9 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.INVALID_PARAMETER, message, request, List.of(detail));
     }
 
+    /**
+     * Devuelve 400 MALFORMED_BODY cuando el cuerpo de la petición no es JSON válido.
+     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleUnreadableBody(HttpMessageNotReadableException exception,
                                                                  HttpServletRequest request) {
@@ -108,6 +130,9 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.MALFORMED_BODY, ErrorCode.MALFORMED_BODY.message(), request, List.of());
     }
 
+    /**
+     * Devuelve 404 ENDPOINT_NOT_FOUND cuando la ruta solicitada no existe.
+     */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleEndpointNotFound(NoResourceFoundException exception,
                                                                    HttpServletRequest request) {
@@ -117,6 +142,9 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.ENDPOINT_NOT_FOUND, ErrorCode.ENDPOINT_NOT_FOUND.message(), request, List.of());
     }
 
+    /**
+     * Devuelve 405 METHOD_NOT_ALLOWED cuando el verbo HTTP no está soportado en la ruta.
+     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiErrorResponse> handleMethodNotAllowed(HttpRequestMethodNotSupportedException exception,
                                                                    HttpServletRequest request) {
@@ -126,6 +154,9 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.METHOD_NOT_ALLOWED, ErrorCode.METHOD_NOT_ALLOWED.message(), request, List.of());
     }
 
+    /**
+     * Devuelve 409 DATA_CONFLICT ante violaciones de integridad de la base de datos.
+     */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleDataIntegrity(DataIntegrityViolationException exception,
                                                                 HttpServletRequest request) {
@@ -135,6 +166,9 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.DATA_CONFLICT, ErrorCode.DATA_CONFLICT.message(), request, List.of());
     }
 
+    /**
+     * Devuelve 500 INTERNAL_ERROR como red de seguridad para cualquier excepción no controlada.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
         log.error("flow_code={} status={} path={}",
@@ -159,6 +193,9 @@ public class GlobalExceptionHandler {
         return new FieldValidationError(field, violation.getMessage());
     }
 
+    /**
+     * Convierte el nombre camelCase del campo al formato snake_case usado por la API.
+     */
     private static String toApiFieldName(String field) {
         if (field == null || field.isBlank()) {
             return DEFAULT_PARAMETER_NAME;
@@ -166,6 +203,9 @@ public class GlobalExceptionHandler {
         return CAMEL_CASE_BOUNDARY.matcher(field).replaceAll("$1_$2").toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Extrae el último segmento de una ruta de propiedad (por ejemplo, "page" de "getVehicles.page").
+     */
     private static String leafName(String propertyPath) {
         if (propertyPath == null || propertyPath.isBlank()) {
             return DEFAULT_PARAMETER_NAME;

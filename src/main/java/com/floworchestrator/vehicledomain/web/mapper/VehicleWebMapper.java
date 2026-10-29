@@ -13,6 +13,10 @@ import com.floworchestrator.vehicledomain.web.dto.RegisterPaymentRequest;
 import com.floworchestrator.vehicledomain.web.dto.VehiclePageResponse;
 import com.floworchestrator.vehicledomain.web.dto.VehicleResponse;
 
+/**
+ * Mapper estático entre los DTOs web y el modelo de dominio.
+ * Centraliza las conversiones de entrada (comandos) y salida (respuestas) de la API.
+ */
 public final class VehicleWebMapper {
 
     private VehicleWebMapper() {

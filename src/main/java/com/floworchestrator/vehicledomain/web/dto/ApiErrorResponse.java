@@ -6,6 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Contrato de error HTTP de la API: estado, mensaje, código funcional (flow_code),
+ * ruta, identificador de traza y detalles de validación por campo.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ApiErrorResponse(
         Instant timestamp,

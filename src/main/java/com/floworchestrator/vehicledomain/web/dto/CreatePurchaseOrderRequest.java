@@ -5,6 +5,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Cuerpo de la petición para registrar una orden de compra. El purchase_order_id es
+ * opcional; si se envía, solo admite letras, números, guiones y guiones bajos.
+ */
 public record CreatePurchaseOrderRequest(
         @JsonProperty("vehicle_id")
         @NotBlank(message = "El identificador del vehículo es obligatorio.")

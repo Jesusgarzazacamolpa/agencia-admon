@@ -2,6 +2,10 @@ package com.floworchestrator.vehicledomain.domain.exception;
 
 import org.springframework.http.HttpStatus;
 
+/**
+ * Catálogo de errores de dominio con su código funcional (expuesto como flow_code),
+ * el estado HTTP asociado y el mensaje orientado al cliente de la API.
+ */
 public enum ErrorCode {
 
     VEHICLE_NOT_FOUND("ERR_VEHICLE_NOT_FOUND_01", HttpStatus.NOT_FOUND,

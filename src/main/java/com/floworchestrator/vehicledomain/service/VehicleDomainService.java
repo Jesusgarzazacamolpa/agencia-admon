@@ -32,6 +32,10 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Servicio de dominio de vehículos y compras. Centraliza las reglas de consulta del
+ * catálogo, el alta idempotente de órdenes de compra y el registro de pagos.
+ */
 @Service
 @RequiredArgsConstructor
 public class VehicleDomainService {
@@ -53,6 +57,11 @@ public class VehicleDomainService {
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final PaymentMethodRepository paymentMethodRepository;
 
+    /**
+     * Obtiene un vehículo por su identificador de negocio.
+     *
+     * @throws ApiException con VEHICLE_NOT_FOUND si no existe
+     */
     @Transactional(readOnly = true)
     public VehicleInfo getVehicleById(String vehicleId) {
         return vehicleRepository.findByVehicleId(vehicleId)
@@ -60,6 +69,13 @@ public class VehicleDomainService {
                 .orElseThrow(() -> new ApiException(ErrorCode.VEHICLE_NOT_FOUND));
     }
 
+    /**
+     * Consulta el catálogo con filtros opcionales y paginación basada en 1, ordenado por
+     * marca, modelo e identificador; el estado solo admite AVAILABLE o UNAVAILABLE.
+     *
+     * @param page número de página, empezando en 1
+     * @throws ApiException INVALID_PRICE_RANGE si el mínimo supera al máximo, o INVALID_PARAMETER si el estado no es válido
+     */
     @Transactional(readOnly = true)
     public VehiclePage getVehicles(int page, int size, String brand, String model, String status,
                                    BigDecimal minPrice, BigDecimal maxPrice, Integer year) {
@@ -82,6 +98,9 @@ public class VehicleDomainService {
         return new VehiclePage(content, vehicles.getTotalElements(), page, size);
     }
 
+    /**
+     * Devuelve todos los vehículos disponibles sin paginar.
+     */
     @Transactional(readOnly = true)
     public List<VehicleInfo> getAvailableVehicles() {
         return vehicleRepository.findByAvailableTrue().stream()
@@ -89,6 +108,12 @@ public class VehicleDomainService {
                 .toList();
     }
 
+    /**
+     * Registra una orden de compra de forma idempotente por purchase_order_id: si la orden
+     * ya existe con el mismo vehículo y cliente la reutiliza, y si difieren lanza conflicto.
+     *
+     * @throws ApiException VEHICLE_NOT_FOUND si el vehículo no existe, o DATA_CONFLICT si el identificador pertenece a otra combinación
+     */
     @Transactional
     public PurchaseOrderCreated createPurchaseOrder(CreatePurchaseOrderCommand command) {
         vehicleRepository.findByVehicleId(command.vehicleId())
@@ -121,6 +146,12 @@ public class VehicleDomainService {
         return new PurchaseOrderCreated(purchaseOrderId, PurchaseOrderStatus.CREATED, PURCHASE_ORDER_CREATED_MESSAGE);
     }
 
+    /**
+     * Registra un pago configurado para una orden existente y la marca como PAYMENT_CONFIGURED
+     * dentro de la misma transacción; no valida el tipo de pago contra un catálogo.
+     *
+     * @throws ApiException PURCHASE_ORDER_NOT_FOUND si la orden no existe
+     */
     @Transactional
     public PaymentRegistered registerPayment(RegisterPaymentCommand command) {
         PurchaseOrder order = purchaseOrderRepository.findByPurchaseOrderId(command.purchaseOrderId())
@@ -140,12 +171,18 @@ public class VehicleDomainService {
         return new PaymentRegistered(command.purchaseOrderId(), PaymentStatus.PAYMENT_CONFIGURED, command.paymentType());
     }
 
+    /**
+     * Rechaza el rango cuando ambos límites están informados y el mínimo supera al máximo.
+     */
     private void validatePriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
             throw new ApiException(ErrorCode.INVALID_PRICE_RANGE);
         }
     }
 
+    /**
+     * Traduce AVAILABLE/UNAVAILABLE a un booleano y rechaza cualquier otro valor.
+     */
     private Boolean resolveAvailability(String status) {
         if (status == null || status.isBlank()) {
             return null;
@@ -158,6 +195,9 @@ public class VehicleDomainService {
         };
     }
 
+    /**
+     * Usa el identificador informado o genera uno nuevo con el prefijo "po-".
+     */
     private String resolvePurchaseOrderId(String providedId) {
         if (providedId == null || providedId.isBlank()) {
             return PURCHASE_ORDER_ID_PREFIX + UUID.randomUUID();

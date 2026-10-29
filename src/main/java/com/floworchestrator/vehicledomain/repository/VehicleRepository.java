@@ -12,12 +12,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Repositorio JPA del catálogo de vehículos, con búsqueda por identificador
+ * de negocio, listado de disponibles y consulta paginada con filtros opcionales.
+ */
 public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
+    /**
+     * Busca un vehículo por su identificador de negocio vehicle_id.
+     */
     Optional<Vehicle> findByVehicleId(String vehicleId);
 
+    /**
+     * Devuelve todos los vehículos marcados como disponibles, sin paginar.
+     */
     List<Vehicle> findByAvailableTrue();
 
+    /**
+     * Busca vehículos aplicando filtros opcionales: coincidencia parcial sin distinguir
+     * mayúsculas en marca y modelo, disponibilidad exacta, rango de precio y año exacto.
+     * Los parámetros nulos se ignoran; la paginación y el orden los define el llamador.
+     */
     @Query("""
             SELECT v FROM Vehicle v
             WHERE (CAST(:brand AS string) IS NULL

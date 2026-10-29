@@ -18,6 +18,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+/**
+ * Entidad JPA de la tabla payment_method: registra el medio de pago configurado
+ * para una orden de compra, con su tipo, institución financiera y estado.
+ */
 @Entity
 @Table(name = "payment_method",
         indexes = @Index(name = "idx_payment_method_purchase_order", columnList = "purchase_order_id"))
@@ -45,6 +49,9 @@ public class PaymentMethod {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Asigna la fecha de creación en UTC si no viene informada.
+     */
     @PrePersist
     void assignCreatedAt() {
         if (createdAt == null) {

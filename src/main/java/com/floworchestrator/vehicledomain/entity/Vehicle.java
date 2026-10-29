@@ -14,6 +14,10 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * Entidad JPA de la tabla vehicle: catálogo de vehículos con sus datos
+ * comerciales (marca, modelo, año, precio, moneda) y su disponibilidad.
+ */
 @Entity
 @Table(name = "vehicle",
         uniqueConstraints = @UniqueConstraint(name = "uk_vehicle_vehicle_id", columnNames = "vehicle_id"),

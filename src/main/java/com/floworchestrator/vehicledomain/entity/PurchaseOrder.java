@@ -19,6 +19,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+/**
+ * Entidad JPA de la tabla purchase_order: orden de compra identificada por un
+ * purchase_order_id único, asociada a un cliente y a un vehículo, con su estado.
+ */
 @Entity
 @Table(name = "purchase_order",
         uniqueConstraints = @UniqueConstraint(name = "uk_purchase_order_purchase_order_id", columnNames = "purchase_order_id"),
@@ -50,6 +54,9 @@ public class PurchaseOrder {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Asigna la fecha de creación en UTC si no viene informada.
+     */
     @PrePersist
     void assignCreatedAt() {
         if (createdAt == null) {

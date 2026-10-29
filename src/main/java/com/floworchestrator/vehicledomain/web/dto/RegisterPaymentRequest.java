@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Cuerpo de la petición para registrar un pago sobre una orden de compra existente.
+ * El tipo de pago y la institución financiera se almacenan como texto libre.
+ */
 public record RegisterPaymentRequest(
         @JsonProperty("purchase_order_id")
         @NotBlank(message = "El identificador de la orden de compra es obligatorio.")
